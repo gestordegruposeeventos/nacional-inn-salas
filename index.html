@@ -369,14 +369,9 @@ function buscar() {
     }).join('');
 
     const eid = id.replace(/[^a-z0-9]/gi,'_');
-    const safeHotel = r.hotel.replace(/'/g,"\'");
-    const safeSala = r.sala.replace(/'/g,"\'");
-    const safeEmail = (r.email||'').replace(/'/g,"\'");
-    const safeTel = (r.tel||'').replace(/'/g,"\'");
-    const safeWa = (r.whatsapp||'').replace(/'/g,"\'");
-    const safeId = id.replace(/'/g,"\'");
+    CARD_DATA[eid] = {id, hotel:r.hotel, sala:r.sala, email:r.email||'', tel:r.tel||'', whatsapp:r.whatsapp||'', formatos:r.formatos};
 
-    html += `<div class="card ${bs}${isSel?' selected':''}" id="card-${eid}" onclick="toggleCard('${safeId}','${safeHotel}','${safeSala}','${safeEmail}','${safeTel}','${safeWa}',${JSON.stringify(r.formatos)})">
+    html += `<div class="card ${bs}${isSel?' selected':''}" id="card-${eid}" data-eid="${eid}">
       <div class="card-check"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
       <div class="card-hotel">${r.hotel}</div>
       <div class="card-sala">${r.sala}</div>
