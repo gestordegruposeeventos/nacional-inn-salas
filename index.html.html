@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nacional Inn — Busca de Salas</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f4f2;color:#1a1a1a;min-height:100vh}
+.topbar{background:#1a7a3c;height:60px;padding:0 2rem;display:flex;align-items:center;justify-content:space-between}
+.logo{display:flex;align-items:center;gap:12px}
+.logo svg{width:32px;height:32px;flex-shrink:0}
+.brand-name{color:white;font-size:17px;font-weight:500;letter-spacing:-0.4px;line-height:1.1}
+.brand-sub{color:rgba(255,255,255,0.7);font-size:10px;letter-spacing:1.2px;text-transform:uppercase}
+.admin-btn{background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.3);border-radius:6px;padding:6px 14px;font-size:12px;cursor:pointer}
+.admin-btn:hover{background:rgba(255,255,255,0.25)}
+.main{max-width:1080px;margin:0 auto;padding:2rem 1.5rem 6rem}
+.panel{background:white;border-radius:12px;border:0.5px solid #e2e2e2;padding:1.5rem;margin-bottom:1.5rem}
+.panel-title{font-size:10px;font-weight:500;letter-spacing:1.4px;text-transform:uppercase;color:#aaa;margin-bottom:1rem}
+.filter-grid{display:grid;grid-template-columns:1fr 1fr 1fr 120px 120px auto;gap:10px;align-items:end}
+@media(max-width:860px){.filter-grid{grid-template-columns:1fr 1fr 1fr}}
+@media(max-width:560px){.filter-grid{grid-template-columns:1fr 1fr}}
+label{display:block;font-size:10px;font-weight:500;color:#999;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+select,input[type=number]{width:100%;height:42px;border:1px solid #ddd;border-radius:8px;padding:0 12px;font-size:13px;background:#fafafa;color:#1a1a1a;appearance:none;-webkit-appearance:none;outline:none;transition:border-color 0.15s}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23aaa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;background-color:#fafafa;padding-right:30px;cursor:pointer}
+select:focus,input:focus{border-color:#1a7a3c;background:white;box-shadow:0 0 0 3px rgba(26,122,60,0.08)}
+.btn-search{height:42px;padding:0 22px;background:#1a7a3c;color:white;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;align-self:end}
+.btn-search:hover{opacity:0.88}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
+.stat{background:white;border:0.5px solid #e2e2e2;border-radius:10px;padding:14px 16px}
+.stat-n{font-size:26px;font-weight:500;line-height:1}
+.stat-n.g{color:#1a7a3c}.stat-n.r{color:#c83a3a}
+.stat-l{font-size:11px;color:#999;margin-top:4px}
+.sec-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.sec-title{font-size:11px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:#999}
+.legend{display:flex;gap:14px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:#999}
+.leg-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;margin-bottom:1.5rem}
+.card{background:white;border:0.5px solid #e2e2e2;border-radius:12px;padding:16px;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s;position:relative}
+.card:hover{border-color:#bbb}
+.card.selected{border-color:#1a7a3c;box-shadow:0 0 0 2px rgba(26,122,60,0.12)}
+.card.fits{border-left:3px solid #1a7a3c}
+.card.tight{border-left:3px solid #c87a1a}
+.card.nope{border-left:3px solid #e0e0e0;opacity:0.5}
+.card-check{position:absolute;top:14px;right:14px;width:18px;height:18px;border-radius:4px;border:1.5px solid #ddd;background:white;display:flex;align-items:center;justify-content:center;transition:all 0.15s;flex-shrink:0}
+.card.selected .card-check{background:#1a7a3c;border-color:#1a7a3c}
+.check-icon{width:10px;height:10px;display:none}
+.card.selected .check-icon{display:block}
+.card-hotel{font-size:11px;font-weight:500;color:#999;margin-bottom:3px;padding-right:28px}
+.card-sala{font-size:14px;font-weight:500;color:#1a1a1a;margin-bottom:8px;line-height:1.3}
+.card-meta{font-size:11px;color:#bbb;margin-bottom:10px}
+.fmts-grid{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px}
+.fmt-tag{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:500;border:1px solid transparent}
+.fmt-tag.fits{background:#e6f4ed;color:#0f5c2a;border-color:#c3e6d0}
+.fmt-tag.tight{background:#fef3e2;color:#7a4a0a;border-color:#fcd99a}
+.fmt-tag.nope{background:#f5f5f5;color:#999;border-color:#e0e0e0}
+.fmt-tag.neutral{background:#f5f5f5;color:#555;border-color:#e0e0e0}
+.fmt-tag-name{font-size:10px;font-weight:400;opacity:0.8}
+.fmt-tag-cap{font-size:11px;font-weight:600}
+.card-footer{display:flex;align-items:center;gap:6px;padding-top:10px;border-top:0.5px solid #f2f2f2}
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-text{font-size:11px;color:#888}
+.contact-section{margin-top:2rem}
+.sec-bar{font-size:11px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:#999;margin-bottom:10px}
+.contact-wrap{background:white;border:0.5px solid #e2e2e2;border-radius:10px;overflow:hidden}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{background:#1a7a3c;color:white;padding:10px 16px;text-align:left;font-size:10px;font-weight:500;letter-spacing:0.6px;text-transform:uppercase}
+tbody td{padding:9px 16px;border-bottom:0.5px solid #f2f2f2;color:#333}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafaf8}
+a{color:#1a7a3c;text-decoration:none}
+a:hover{text-decoration:underline}
+.divider{height:0.5px;background:#ececec;margin-bottom:1.5rem}
+#results-area{display:none}
+.init-msg{text-align:center;padding:4rem 0}
+.init-msg p{font-size:14px;color:#bbb}
+.init-hint{font-size:12px;color:#ccc;margin-top:6px}
+.empty{text-align:center;padding:3rem 0;color:#ccc;font-size:14px}
+.loading{text-align:center;padding:4rem 0;color:#999;font-size:14px}
+.loading-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#1a7a3c;margin:0 3px;animation:bounce 1.2s infinite}
+.loading-dot:nth-child(2){animation-delay:0.2s}
+.loading-dot:nth-child(3){animation-delay:0.4s}
+@keyframes bounce{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+.float-bar{position:fixed;bottom:0;left:0;right:0;background:white;border-top:1px solid #e0e0e0;padding:14px 2rem;display:none;align-items:center;justify-content:space-between;gap:16px;z-index:100;box-shadow:0 -4px 20px rgba(0,0,0,0.08)}
+.float-bar.visible{display:flex}
+.float-sel{font-size:13px;font-weight:500;color:#1a1a1a}
+.float-sel span{color:#1a7a3c}
+.float-btns{display:flex;gap:10px}
+.btn-clear{padding:8px 16px;background:none;border:1px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer;color:#666}
+.btn-orc{padding:8px 20px;background:#1a7a3c;color:white;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer}
+.btn-clear:hover{background:#f5f5f5}
+.btn-orc:hover{opacity:0.88}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:white;border-radius:14px;padding:1.75rem;width:100%;max-width:460px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:500;margin-bottom:4px;color:#1a1a1a}
+.modal-sub{font-size:13px;color:#888;margin-bottom:1.25rem;line-height:1.5}
+.modal input[type=password]{width:100%;height:44px;border:1px solid #ddd;border-radius:8px;padding:0 14px;font-size:14px;outline:none;margin-bottom:10px}
+.modal input[type=password]:focus{border-color:#1a7a3c;box-shadow:0 0 0 3px rgba(26,122,60,0.08)}
+.modal-err{font-size:12px;color:#c83a3a;margin-bottom:8px;display:none}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;margin-top:1rem}
+.btn-cancel{padding:8px 18px;background:none;border:1px solid #ddd;border-radius:8px;font-size:13px;cursor:pointer;color:#666}
+.btn-cancel:hover{background:#f5f5f5}
+.btn-confirm{padding:8px 18px;background:#1a7a3c;color:white;border:none;border-radius:8px;font-size:13px;cursor:pointer}
+.btn-confirm:hover{opacity:0.88}
+.sheets-info{background:#f0f9f4;border:1px solid #c3e6d0;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#1a5c2e;line-height:1.7}
+.orc-list{margin-bottom:1.25rem;max-height:160px;overflow-y:auto}
+.orc-item{font-size:12px;color:#333;padding:5px 0;border-bottom:0.5px solid #f0f0f0;line-height:1.4}
+.orc-item:last-child{border-bottom:none}
+.orc-hotel{font-weight:500}
+.contact-opts{display:flex;flex-direction:column;gap:10px}
+.contact-opt{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid #e0e0e0;border-radius:10px;cursor:pointer;transition:all 0.15s;text-decoration:none}
+.contact-opt:hover{border-color:#1a7a3c;background:#f0f9f4}
+.contact-opt-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.contact-opt-text{font-size:13px;font-weight:500;color:#1a1a1a}
+.contact-opt-sub{font-size:11px;color:#888}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">
+    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <circle cx="16" cy="16" r="7" fill="white"/>
+      <circle cx="16" cy="16" r="3.5" fill="#1a7a3c"/>
+    </svg>
+    <div>
+      <div class="brand-name">nacional inn</div>
+      <div class="brand-sub">Hotéis e Centros de Convenções</div>
+    </div>
+  </div>
+  <button class="admin-btn" onclick="openAdmin()">&#9881; Admin</button>
+</div>
+
+<div class="main">
+  <div class="panel">
+    <div class="panel-title">Busca de salas para eventos</div>
+    <div class="filter-grid">
+      <div>
+        <label>Cidade</label>
+        <select id="sel-cidade" onchange="updateHoteis()">
+          <option value="">Todas as cidades</option>
+          <option>ARARAQUARA</option><option>ARAÇATUBA</option><option>CAMPOS DO JORDÃO</option>
+          <option>CURITIBA</option><option>FOZ DO IGUAÇÚ</option><option>RIBEIRÃO PRETO</option>
+          <option>SÃO JOSÉ DO RIO PRETO</option><option>SÃO JOSÉ DOS CAMPOS</option>
+          <option>SÃO JOSÉ DOS PINHAIS</option><option>SÃO PAULO</option>
+        </select>
+      </div>
+      <div>
+        <label>Hotel</label>
+        <select id="sel-hotel"><option value="">Todos os hotéis</option></select>
+      </div>
+      <div>
+        <label>Formato</label>
+        <select id="sel-formato">
+          <option value="">Todos os formatos</option>
+          <option>AUDITÓRIO</option><option>BANQUETE</option><option>COQUETEL</option>
+          <option>ESCOLAR</option><option>ESPINHA DE PEIXE</option><option>FESTA</option>
+          <option>MEIA LUA</option><option>MESA REDONDA FIXA</option><option>MESAS REDONDAS</option>
+          <option>PLENÁRIA</option><option>REUNIÃO</option><option>U</option>
+        </select>
+      </div>
+      <div>
+        <label>Nº de pessoas</label>
+        <input type="number" id="inp-pax" min="1" placeholder="Ex: 80"/>
+      </div>
+      <div>
+        <label>Pé direito mín. (m)</label>
+        <input type="number" id="inp-pe" min="0" step="0.1" placeholder="Ex: 2.5"/>
+      </div>
+      <button class="btn-search" onclick="buscar()">Buscar</button>
+    </div>
+  </div>
+
+  <div id="loading-state" class="loading" style="display:none">
+    <div><span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span></div>
+    <p style="margin-top:12px;font-size:13px">Carregando dados da planilha...</p>
+  </div>
+
+  <div id="init-state" class="init-msg">
+    <p>Selecione os filtros e clique em <strong>Buscar</strong>.</p>
+    <p class="init-hint" id="total-hint">Carregando...</p>
+  </div>
+
+  <div id="results-area">
+    <div class="stats">
+      <div class="stat"><div class="stat-n" id="st-total">0</div><div class="stat-l">salas encontradas</div></div>
+      <div class="stat"><div class="stat-n g" id="st-ok">—</div><div class="stat-l">comportam o grupo</div></div>
+      <div class="stat"><div class="stat-n r" id="st-no">—</div><div class="stat-l">capacidade insuficiente</div></div>
+    </div>
+    <div class="divider"></div>
+    <div class="sec-header">
+      <div class="sec-title">Salas encontradas</div>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#1a7a3c"></div>Comporta</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#c87a1a"></div>Quase (±10%)</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#ddd"></div>Insuficiente</div>
+      </div>
+    </div>
+    <div id="cards-container" class="cards"></div>
+    <div class="contact-section">
+      <div class="sec-bar">Contato dos hotéis</div>
+      <div class="contact-wrap">
+        <table><thead><tr><th>Hotel</th><th>E-mail</th><th>Telefone</th></tr></thead>
+        <tbody id="contact-body"></tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="float-bar" id="float-bar">
+  <div class="float-sel"><span id="sel-count">0</span> sala(s) selecionada(s)</div>
+  <div class="float-btns">
+    <button class="btn-clear" onclick="clearSelection()">Limpar seleção</button>
+    <button class="btn-orc" onclick="openOrcamento()">Solicitar orçamento</button>
+  </div>
+</div>
+
+<div class="overlay" id="orc-overlay">
+  <div class="modal">
+    <h2>Solicitar orçamento</h2>
+    <p class="modal-sub">Salas selecionadas para cotação:</p>
+    <div class="orc-list" id="orc-list"></div>
+    <p class="modal-sub">Como prefere entrar em contato?</p>
+    <div class="contact-opts" id="contact-opts"></div>
+    <div class="modal-btns"><button class="btn-cancel" onclick="closeOrcamento()">Fechar</button></div>
+  </div>
+</div>
+
+<div class="overlay" id="admin-overlay">
+  <div class="modal">
+    <h2>Acesso administrativo</h2>
+    <p class="modal-sub">Digite a senha para acessar o painel de gestão.</p>
+    <div class="sheets-info">
+      <strong>Base de dados:</strong> Google Sheets (Nacional Inn)<br>
+      <a href="https://docs.google.com/spreadsheets/d/1jp6mFz_eJftTh-z3YR6Ba3CCFZyChHCrYWW79aQgASo/edit" target="_blank">Abrir planilha &#8594;</a>
+    </div>
+    <div class="modal-err" id="admin-err">Senha incorreta.</div>
+    <input type="password" id="admin-pass" placeholder="Senha" onkeydown="if(event.key==='Enter')checkAdmin()"/>
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeAdmin()">Cancelar</button>
+      <button class="btn-confirm" onclick="checkAdmin()">Entrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URL = "https://script.google.com/a/macros/nacionalinn.com/s/AKfycbzRd86sN5T8jDq9dp1wfJWxTyJn3FvqcilgKo3kOShljWLVj9x7yvLBaw03lHHyOaf0/exec";
+const ADMIN_PASSWORD = "nacional2024";
+const SHEETS_URL = "https://docs.google.com/spreadsheets/d/1jp6mFz_eJftTh-z3YR6Ba3CCFZyChHCrYWW79aQgASo/edit";
+const FALLBACK = [{"hotel":"CASSINO TOWER CURITIBA AEROPORTO","cidade":"SÃO JOSÉ DOS PINHAIS","sala":"ARAUCÁRIA I","m2":56.0,"pe":2.4,"email":"reservas@cassinotowercuritiba.com.br","tel":"(41) 3074-5000","whatsapp":null,"formatos":{"AUDITÓRIO":40,"BANQUETE":20,"COQUETEL":20,"ESCOLAR":20,"ESPINHA DE PEIXE":20,"MEIA LUA":20,"U":20}},{"hotel":"CASSINO TOWER CURITIBA AEROPORTO","cidade":"SÃO JOSÉ DOS PINHAIS","sala":"ARAUCÁRIA I e II","m2":110.0,"pe":2.4,"email":"reservas@cassinotowercuritiba.com.br","tel":"(41) 3074-5000","whatsapp":null,"formatos":{"AUDITÓRIO":110,"BANQUETE":55,"COQUETEL":55,"ESCOLAR":60,"ESPINHA DE PEIXE":60,"MEIA LUA":55,"U":55}},{"hotel":"CASSINO TOWER CURITIBA AEROPORTO","cidade":"SÃO JOSÉ DOS PINHAIS","sala":"ARAUCÁRIA II","m2":56.0,"pe":2.4,"email":"reservas@cassinotowercuritiba.com.br","tel":"(41) 3074-5000","whatsapp":null,"formatos":{"AUDITÓRIO":40,"BANQUETE":20,"COQUETEL":20,"ESCOLAR":20,"ESPINHA DE PEIXE":20,"MEIA LUA":20,"U":20}},{"hotel":"CASSINO TOWER CURITIBA AEROPORTO","cidade":"SÃO JOSÉ DOS PINHAIS","sala":"IMBUIA","m2":51.0,"pe":2.4,"email":"reservas@cassinotowercuritiba.com.br","tel":"(41) 3074-5000","whatsapp":null,"formatos":{"AUDITÓRIO":40,"BANQUETE":20,"COQUETEL":20,"ESCOLAR":20,"ESPINHA DE PEIXE":20,"MEIA LUA":20,"U":20}},{"hotel":"CASSINO TOWER CURITIBA AEROPORTO","cidade":"SÃO JOSÉ DOS PINHAIS","sala":"IPÊ","m2":22.0,"pe":2.4,"email":"reservas@cassinotowercuritiba.com.br","tel":"(41) 3074-5000","whatsapp":null,"formatos":{"U":8}},{"hotel":"CASSINO TOWER SÃO JOSÉ DO RIO PRETO","cidade":"SÃO JOSÉ DO RIO PRETO","sala":"MEZANINO","m2":62.0,"pe":3.2,"email":"reservas@cassinotowersaojose.com.br","tel":"(17)  2138-8788","whatsapp":null,"formatos":{"AUDITÓRIO":50,"ESCOLAR":40,"PLENÁRIA":40,"U":30}},{"hotel":"CASTELO NACIONAL INN","cidade":"CAMPOS DO JORDÃO","sala":"SALÃO INFERIOR","m2":86.3,"pe":2.57,"email":null,"tel":null,"whatsapp":null,"formatos":{"AUDITÓRIO":50}},{"hotel":"CASTELO NACIONAL INN","cidade":"CAMPOS DO JORDÃO","sala":"SALÃO SUPERIOR","m2":90.8,"pe":4.9,"email":null,"tel":null,"whatsapp":null,"formatos":{"AUDITÓRIO":50,"ESCOLAR":20,"ESPINHA DE PEIXE":20}},{"hotel":"DAN INN ARARAQUARA","cidade":"ARARAQUARA","sala":"CENACON","m2":313.0,"pe":3.45,"email":"reservas@daninnararaquara.com.br","tel":"(16) 2103-0038","whatsapp":null,"formatos":{"AUDITÓRIO":300,"ESCOLAR":60,"MESAS REDONDAS":150,"U":58}},{"hotel":"DAN INN ARARAQUARA","cidade":"ARARAQUARA","sala":"FERROVIARIA","m2":55.0,"pe":3.0,"email":"reservas@daninnararaquara.com.br","tel":"(16) 2103-0038","whatsapp":null,"formatos":{"AUDITÓRIO":50,"ESCOLAR":30,"MESAS REDONDAS":30,"U":25}},{"hotel":"DAN INN CAMPOS DO JORDÃO","cidade":"CAMPOS DO JORDÃO","sala":"ORQUIDEA","m2":212.5,"pe":3.1,"email":null,"tel":null,"whatsapp":null,"formatos":{"AUDITÓRIO":250,"ESCOLAR":120,"ESPINHA DE PEIXE":120,"U":80}},{"hotel":"DAN INN CURITIBA","cidade":"CURITIBA","sala":"IPÊ","m2":53.0,"pe":2.3,"email":"reservas@daninncuritiba.com.br","tel":"(41) 3322-8558","whatsapp":null,"formatos":{"AUDITÓRIO":50,"ESCOLAR":20,"ESPINHA DE PEIXE":24,"U":10}},{"hotel":"DAN INN CURITIBA","cidade":"CURITIBA","sala":"ARAUCÁRIA","m2":99.0,"pe":2.54,"email":"reservas@daninncuritiba.com.br","tel":"(41) 3322-8558","whatsapp":null,"formatos":{"AUDITÓRIO":100,"ESCOLAR":60,"ESPINHA DE PEIXE":50,"U":40}},{"hotel":"DAN INN CURITIBA","cidade":"CURITIBA","sala":"JATOBÁ","m2":50.0,"pe":2.46,"email":"reservas@daninncuritiba.com.br","tel":"(41) 3322-8558","whatsapp":null,"formatos":{"AUDITÓRIO":50,"ESCOLAR":30,"ESPINHA DE PEIXE":30,"U":20}},{"hotel":"DAN INN PLANALTO","cidade":"SÃO PAULO","sala":"AROUCHE","m2":96.0,"pe":2.47,"email":"eventos@daninnplanalto.com.br","tel":"(11) 94908-4561","whatsapp":null,"formatos":{"AUDITÓRIO":80,"ESCOLAR":30,"ESPINHA DE PEIXE":30,"MESAS REDONDAS":40,"U":28}},{"hotel":"DAN INN PLANALTO","cidade":"SÃO PAULO","sala":"CENACON - PLANALTO","m2":310.0,"pe":2.47,"email":"eventos@daninnplanalto.com.br","tel":"(11) 94908-4561","whatsapp":null,"formatos":{"AUDITÓRIO":350,"ESCOLAR":180,"ESPINHA DE PEIXE":180,"MESAS REDONDAS":200,"U":60}},{"hotel":"DAN INN PLANALTO","cidade":"SÃO PAULO","sala":"REPÚBLICA","m2":126.0,"pe":2.47,"email":"eventos@daninnplanalto.com.br","tel":"(11) 94908-4561","whatsapp":null,"formatos":{"AUDITÓRIO":150,"ESCOLAR":60,"ESPINHA DE PEIXE":60,"MESAS REDONDAS":80,"U":40}},{"hotel":"DAN INN PLANALTO","cidade":"SÃO PAULO","sala":"SANTA EFIGÊNIA","m2":17.0,"pe":2.47,"email":"eventos@daninnplanalto.com.br","tel":"(11) 94908-4561","whatsapp":null,"formatos":{"AUDITÓRIO":12,"ESCOLAR":8,"ESPINHA DE PEIXE":8,"U":8}},{"hotel":"DAN INN SÃO JOSÉ DO RIO PRETO","cidade":"SÃO JOSÉ DO RIO PRETO","sala":"DAN INN","m2":62.0,"pe":2.65,"email":"reservas@daninnsjrpreto.com.br","tel":"(17) 2138-8787","whatsapp":null,"formatos":{"AUDITÓRIO":30,"ESCOLAR":20,"U":15}},{"hotel":"DAN INN SÃO JOSÉ DO RIO PRETO","cidade":"SÃO JOSÉ DO RIO PRETO","sala":"GRAN RIO","m2":82.0,"pe":2.65,"email":"reservas@daninnsjrpreto.com.br","tel":"(17) 2138-8787","whatsapp":null,"formatos":{"AUDITÓRIO":100,"ESCOLAR":50,"U":40}},{"hotel":"DAN INN SÃO JOSÉ DO RIO PRETO","cidade":"SÃO JOSÉ DO RIO PRETO","sala":"RIO PRETO","m2":32.0,"pe":2.65,"email":"reservas@daninnsjrpreto.com.br","tel":"(17) 2138-8787","whatsapp":null,"formatos":{"AUDITÓRIO":20,"ESCOLAR":15,"U":10}},{"hotel":"DAN INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"14 BIS","m2":44.0,"pe":2.5,"email":"eventos@daninnsaojose.com.br","tel":"(12) 3941-8588","whatsapp":null,"formatos":{"AUDITÓRIO":40,"ESCOLAR":20,"ESPINHA DE PEIXE":15,"U":20}},{"hotel":"DAN INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"BANDEIRANTES","m2":50.0,"pe":2.5,"email":"eventos@daninnsaojose.com.br","tel":"(12) 3941-8588","whatsapp":null,"formatos":{"AUDITÓRIO":50,"ESCOLAR":20,"ESPINHA DE PEIXE":20,"U":20}},{"hotel":"DAN INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"BELVALE","m2":144.0,"pe":2.5,"email":"eventos@daninnsaojose.com.br","tel":"(12) 3941-8588","whatsapp":null,"formatos":{"AUDITÓRIO":120,"ESCOLAR":45,"ESPINHA DE PEIXE":45,"U":40}},{"hotel":"DAN INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"XAVANTES","m2":30.0,"pe":2.5,"email":"eventos@daninnsaojose.com.br","tel":"(12) 3941-8588","whatsapp":null,"formatos":{"AUDITÓRIO":25,"ESCOLAR":15,"ESPINHA DE PEIXE":15,"U":15}},{"hotel":"EURO SUITE CURITIBA BATEL","cidade":"CURITIBA","sala":"CAPERNICO","m2":61.0,"pe":3.0,"email":"reservas@eurosuitebatel.com.br","tel":"(41) 3028-5000","whatsapp":null,"formatos":{"AUDITÓRIO":70,"BANQUETE":30,"COQUETEL":25,"ESCOLAR":40,"ESPINHA DE PEIXE":25,"MEIA LUA":25,"U":20}},{"hotel":"EURO SUITE CURITIBA BATEL","cidade":"CURITIBA","sala":"GALILEI","m2":60.0,"pe":3.0,"email":"reservas@eurosuitebatel.com.br","tel":"(41) 3028-5000","whatsapp":null,"formatos":{"AUDITÓRIO":70,"BANQUETE":30,"COQUETEL":25,"ESCOLAR":40,"ESPINHA DE PEIXE":25,"MEIA LUA":25,"U":20}},{"hotel":"EURO SUITE SÃO JOSÉ DO RIO PRETO","cidade":"SÃO JOSÉ DO RIO PRETO","sala":"SALA X","m2":42.0,"pe":2.85,"email":"reservas@euroriopreto.com","tel":"(17) 2138-8790","whatsapp":null,"formatos":{"AUDITÓRIO":30}},{"hotel":"EURO SUITE SÃO PAULO","cidade":"SÃO PAULO","sala":"DIAMANTE","m2":115.0,"pe":2.5,"email":"eventos@eurosuitesaopaulo.com.br","tel":"(11) 3614-9970","whatsapp":null,"formatos":{"AUDITÓRIO":130,"ESCOLAR":40,"ESPINHA DE PEIXE":50,"U":40}},{"hotel":"EURO SUITE SÃO PAULO","cidade":"SÃO PAULO","sala":"ESMERALDA","m2":68.0,"pe":3.6,"email":"eventos@eurosuitesaopaulo.com.br","tel":"(11) 3614-9970","whatsapp":null,"formatos":{"AUDITÓRIO":100,"ESCOLAR":40,"ESPINHA DE PEIXE":50,"U":40}},{"hotel":"EURO SUITE SÃO PAULO","cidade":"SÃO PAULO","sala":"MI PIACI","m2":78.0,"pe":4.8,"email":"eventos@eurosuitesaopaulo.com.br","tel":"(11) 3614-9970","whatsapp":null,"formatos":{"AUDITÓRIO":80,"ESCOLAR":40,"ESPINHA DE PEIXE":40,"U":40}},{"hotel":"GOLDEN PARK CAMPOS DO JORDÃO","cidade":"CAMPOS DO JORDÃO","sala":"ARAUCÁRIA","m2":38.0,"pe":2.6,"email":null,"tel":null,"whatsapp":null,"formatos":{"AUDITÓRIO":30}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AFRICA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":110}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AFRICA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":80}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AFRICA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4160","whatsapp":null,"formatos":{"ESCOLAR":48}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AFRICA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4161","whatsapp":null,"formatos":{"U":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AFRICA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":130}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AFRICA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":30}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AMERICAS","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4152","whatsapp":null,"formatos":{"AUDITÓRIO":80}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AMERICAS","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4153","whatsapp":null,"formatos":{"BANQUETE":50}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AMERICAS","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4154","whatsapp":null,"formatos":{"ESCOLAR":36}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AMERICAS","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4155","whatsapp":null,"formatos":{"U":18}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AMERICAS","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4156","whatsapp":null,"formatos":{"COQUETEL":80}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"AMERICAS","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4157","whatsapp":null,"formatos":{"REUNIÃO":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"CONVENTION HALL","m2":436.2,"pe":2.75,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":150}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"CONVENTION HALL","m2":436.2,"pe":2.75,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":220}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"CONVENTION HALL","m2":436.2,"pe":2.75,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4160","whatsapp":null,"formatos":{"ESCOLAR":60}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"CONVENTION HALL","m2":436.2,"pe":2.75,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4161","whatsapp":null,"formatos":{"U":30}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"CONVENTION HALL","m2":436.2,"pe":2.75,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":150}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"CONVENTION HALL","m2":436.2,"pe":2.75,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":36}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4152","whatsapp":null,"formatos":{"AUDITÓRIO":110}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4153","whatsapp":null,"formatos":{"BANQUETE":80}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4154","whatsapp":null,"formatos":{"ESCOLAR":48}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4155","whatsapp":null,"formatos":{"U":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4156","whatsapp":null,"formatos":{"COQUETEL":130}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA","m2":133.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4157","whatsapp":null,"formatos":{"REUNIÃO":30}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA + AFRICA","m2":267.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":220}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA + AFRICA","m2":267.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":160}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA + AFRICA","m2":267.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4160","whatsapp":null,"formatos":{"ESCOLAR":99}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA + AFRICA","m2":267.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4161","whatsapp":null,"formatos":{"U":48}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA + AFRICA","m2":267.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":260}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"EUROPA + AFRICA","m2":267.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":54}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I","m2":75.7,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":35}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I","m2":75.7,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":30}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I","m2":75.7,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4160","whatsapp":null,"formatos":{"ESCOLAR":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I","m2":75.7,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4161","whatsapp":null,"formatos":{"U":21}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I","m2":75.7,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":40}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I","m2":75.7,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I + II","m2":147.3,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":70}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I + II","m2":147.3,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":60}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM I + II","m2":147.3,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":70}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM II","m2":71.6,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":35}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM II","m2":71.6,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":30}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM II","m2":71.6,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4160","whatsapp":null,"formatos":{"ESCOLAR":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM II","m2":71.6,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4161","whatsapp":null,"formatos":{"U":21}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM II","m2":71.6,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":40}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MEETING ROOM II","m2":71.6,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL","m2":132.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4151","whatsapp":null,"formatos":{"AUDITÓRIO":110,"BANQUETE":70,"COQUETEL":110,"ESCOLAR":48,"REUNIÃO":30,"U":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + AMÉRICAS","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":190}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + AMÉRICAS","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":120}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + AMÉRICAS","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4160","whatsapp":null,"formatos":{"ESCOLAR":84}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + AMÉRICAS","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4161","whatsapp":null,"formatos":{"U":42}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + AMÉRICAS","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":190}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + AMÉRICAS","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":48}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + OCEANIA","m2":265.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":220}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + OCEANIA","m2":265.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":140}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + OCEANIA","m2":265.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4160","whatsapp":null,"formatos":{"ESCOLAR":99}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + OCEANIA","m2":265.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4161","whatsapp":null,"formatos":{"U":48}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + OCEANIA","m2":265.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":220}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"MERCOSUL + OCEANIA","m2":265.3,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":54}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"NAÇÕES UNIDAS","m2":872.0,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4151","whatsapp":null,"formatos":{"AUDITÓRIO":100,"BANQUETE":500,"COQUETEL":900,"ESCOLAR":249,"REUNIÃO":138,"U":114}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA","m2":132.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4152","whatsapp":null,"formatos":{"AUDITÓRIO":110}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA","m2":132.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4153","whatsapp":null,"formatos":{"BANQUETE":70}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA","m2":132.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4154","whatsapp":null,"formatos":{"ESCOLAR":48}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA","m2":132.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4155","whatsapp":null,"formatos":{"U":24}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA","m2":132.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4156","whatsapp":null,"formatos":{"COQUETEL":110}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA","m2":132.7,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4157","whatsapp":null,"formatos":{"REUNIÃO":30}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA + ÁSIA","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4158","whatsapp":null,"formatos":{"AUDITÓRIO":190}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA + ÁSIA","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4159","whatsapp":null,"formatos":{"BANQUETE":120}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA + ÁSIA","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4160","whatsapp":null,"formatos":{"ESCOLAR":84}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA + ÁSIA","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4161","whatsapp":null,"formatos":{"U":42}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA + ÁSIA","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4162","whatsapp":null,"formatos":{"COQUETEL":190}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"OCEANIA + ÁSIA","m2":232.9,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":48}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"SALA VIP","m2":55.0,"pe":3.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4163","whatsapp":null,"formatos":{"REUNIÃO":12}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"SALÃO REAL","m2":863.1,"pe":4.85,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4151","whatsapp":null,"formatos":{"AUDITÓRIO":900,"BANQUETE":500,"COQUETEL":1000,"ESCOLAR":249,"U":150}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"ÁSIA","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4152","whatsapp":null,"formatos":{"AUDITÓRIO":80}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"ÁSIA","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4153","whatsapp":null,"formatos":{"BANQUETE":50}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"ÁSIA","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4154","whatsapp":null,"formatos":{"ESCOLAR":36}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"ÁSIA","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4155","whatsapp":null,"formatos":{"U":18}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"ÁSIA","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4156","whatsapp":null,"formatos":{"COQUETEL":80}},{"hotel":"GOLDEN PARK FOZ DO IGUACU","cidade":"FOZ DO IGUAÇÚ","sala":"ÁSIA","m2":100.2,"pe":6.0,"email":"eventos@goldenparkinternacionalfoz.com.br","tel":"(45) 3521-4157","whatsapp":null,"formatos":{"REUNIÃO":24}},{"hotel":"HOTEL GOLDEN PARK CURITIBA","cidade":"CURITIBA","sala":"DORAL","m2":81.0,"pe":2.0,"email":"reservas@goldenparkcuritiba.com.br","tel":"(41) 3121-1818","whatsapp":null,"formatos":{"AUDITÓRIO":60,"BANQUETE":24,"COQUETEL":50,"ESCOLAR":30,"ESPINHA DE PEIXE":30,"MEIA LUA":33,"U":33}},{"hotel":"HOTEL GOLDEN PARK CURITIBA","cidade":"CURITIBA","sala":"NACIONAL","m2":94.0,"pe":3.0,"email":"reservas@goldenparkcuritiba.com.br","tel":"(41) 3121-1818","whatsapp":null,"formatos":{"AUDITÓRIO":90,"BANQUETE":30,"COQUETEL":80,"ESCOLAR":30,"ESPINHA DE PEIXE":30,"MEIA LUA":42,"U":42}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"IPÊ","m2":414.0,"pe":3.3,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":600,"ESCOLAR":300,"ESPINHA DE PEIXE":300,"MEIA LUA":204,"U":100}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"APOIO","m2":22.0,"pe":2.9,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":20,"U":12}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"APOIO DE 6 A 10","m2":28.0,"pe":2.9,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":25}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"APOIO DE 6 A 11","m2":28.0,"pe":2.9,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"U":12}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"CAMÉLIA","m2":115.0,"pe":4.4,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":120,"ESCOLAR":56,"ESPINHA DE PEIXE":56,"MEIA LUA":66,"U":30}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"GERÂNIO","m2":138.0,"pe":3.3,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":170,"ESCOLAR":80,"ESPINHA DE PEIXE":80,"MEIA LUA":66,"U":42}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"GERÂNIO + JASMIN","m2":276.0,"pe":3.3,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":400,"ESCOLAR":150,"ESPINHA DE PEIXE":150,"MEIA LUA":132,"U":50}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"GÉRBERA","m2":118.0,"pe":4.4,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":150,"ESCOLAR":74,"ESPINHA DE PEIXE":74,"MEIA LUA":66,"U":32}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"GÉRBERA + CAMÉLIA","m2":233.0,"pe":4.4,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":300,"ESCOLAR":130,"ESPINHA DE PEIXE":130,"MEIA LUA":132,"U":82}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"JASMIN","m2":138.0,"pe":3.3,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":170,"ESCOLAR":80,"ESPINHA DE PEIXE":80,"MEIA LUA":66,"U":42}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"JASMIN + PRÍMULA","m2":276.0,"pe":3.3,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":400,"ESCOLAR":150,"ESPINHA DE PEIXE":150,"MEIA LUA":132,"U":50}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"LÍRIO","m2":55.0,"pe":2.9,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":50,"ESCOLAR":16,"ESPINHA DE PEIXE":16,"MEIA LUA":20,"U":20}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"ORQUÍDEA","m2":404.0,"pe":4.4,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":600,"ESCOLAR":300,"ESPINHA DE PEIXE":300,"MEIA LUA":204,"U":100}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"PRÍMULA","m2":138.0,"pe":3.3,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":170,"ESCOLAR":80,"ESPINHA DE PEIXE":80,"MEIA LUA":66,"U":42}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"TULÍPA","m2":78.0,"pe":2.9,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":80,"ESCOLAR":40,"ESPINHA DE PEIXE":40,"MEIA LUA":36,"U":24}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"ÍRIS","m2":170.0,"pe":4.4,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":250,"ESCOLAR":100,"ESPINHA DE PEIXE":100,"MEIA LUA":96,"U":50}},{"hotel":"HOTEL JP RIBEIRÃO PRETO RESORT E CONVEÇÕES - BY NACIONALL INN","cidade":"RIBEIRÃO PRETO","sala":"ÍRIS + GÉRBERA","m2":288.0,"pe":4.4,"email":"eventos@hoteljpribeiraopreto.com.br","tel":"(16) 2101-1400","whatsapp":null,"formatos":{"AUDITÓRIO":400,"ESCOLAR":174,"ESPINHA DE PEIXE":174,"MEIA LUA":162,"U":82}},{"hotel":"NACIONAL INN ARAÇATUBA","cidade":"ARAÇATUBA","sala":"DAN INN","m2":92.1,"pe":2.65,"email":"reservas@nacionalinnaracatuba.com.br","tel":"(18) 2101-2661","whatsapp":null,"formatos":{"AUDITÓRIO":80,"ESCOLAR":38,"MESAS REDONDAS":50,"U":30}},{"hotel":"NACIONAL INN ARAÇATUBA","cidade":"ARAÇATUBA","sala":"NACIONAL","m2":57.8,"pe":2.65,"email":"reservas@nacionalinnaracatuba.com.br","tel":"(18) 2101-2661","whatsapp":null,"formatos":{"AUDITÓRIO":50,"ESCOLAR":38,"MESAS REDONDAS":30,"U":30}},{"hotel":"NACIONAL INN ARAÇATUBA","cidade":"ARAÇATUBA","sala":"GOLDEN","m2":34.0,"pe":2.65,"email":"reservas@nacionalinnaracatuba.com.br","tel":"(18) 2101-2661","whatsapp":null,"formatos":{"AUDITÓRIO":30,"ESCOLAR":20,"MESAS REDONDAS":20,"U":14}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"ANTONINA","m2":60.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":60,"ESCOLAR":25,"ESPINHA DE PEIXE":20,"U":20}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"CAIOBÁ","m2":36.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":30,"ESCOLAR":15,"ESPINHA DE PEIXE":16,"U":15}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"CURITIBA","m2":60.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":60,"ESCOLAR":25,"ESPINHA DE PEIXE":20,"U":20}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"GUARATUBA","m2":24.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":15,"ESCOLAR":10,"ESPINHA DE PEIXE":8,"U":10}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"LAPA","m2":46.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":49}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"LONDRINA","m2":60.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":60,"ESCOLAR":25,"ESPINHA DE PEIXE":20,"U":20}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"MARINGÁ","m2":48.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":40,"ESCOLAR":20,"U":20}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"MORRETES","m2":60.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":60,"ESCOLAR":25,"ESPINHA DE PEIXE":20,"U":20}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"PARANAGUÁ","m2":60.0,"pe":2.38,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":60,"ESCOLAR":25,"ESPINHA DE PEIXE":20,"U":20}},{"hotel":"NACIONAL INN CURITIBA ESTAÇÃO","cidade":"CURITIBA","sala":"PARANÁ","m2":150.0,"pe":2.9,"email":"reservas@nacionalinncuritiba.com.br","tel":"(41) 3322-4242","whatsapp":null,"formatos":{"AUDITÓRIO":200,"BANQUETE":40,"ESCOLAR":80,"ESPINHA DE PEIXE":80,"U":45}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"MILÃO","m2":64.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":60,"BANQUETE":5,"COQUETEL":70,"ESCOLAR":24,"ESPINHA DE PEIXE":24,"U":21}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"NÁPOLI","m2":81.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":80,"BANQUETE":9,"COQUETEL":100,"ESCOLAR":42,"ESPINHA DE PEIXE":30,"U":30}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"PALERMO","m2":31.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":20,"COQUETEL":25,"ESCOLAR":10,"ESPINHA DE PEIXE":10,"U":10}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"ROMA I","m2":88.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":90,"BANQUETE":9,"COQUETEL":100,"ESCOLAR":42,"ESPINHA DE PEIXE":30,"U":30}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"ROMA I E II","m2":169.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":180,"BANQUETE":15,"COQUETEL":180,"ESCOLAR":72,"ESPINHA DE PEIXE":60,"U":45}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"ROMA I II E III","m2":250.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":320,"BANQUETE":23,"COQUETEL":320,"ESCOLAR":132,"ESPINHA DE PEIXE":120,"U":69}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"ROMA II","m2":81.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":80,"BANQUETE":9,"COQUETEL":100,"ESCOLAR":42,"ESPINHA DE PEIXE":30,"U":30}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"ROMA II E III","m2":161.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":180,"BANQUETE":12,"COQUETEL":180,"ESCOLAR":72,"ESPINHA DE PEIXE":60,"U":45}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"ROMA III","m2":80.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":80,"BANQUETE":6,"COQUETEL":100,"ESCOLAR":42,"ESPINHA DE PEIXE":30,"U":30}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"TURIM","m2":41.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":32,"BANQUETE":4,"COQUETEL":30,"ESCOLAR":12,"ESPINHA DE PEIXE":12,"U":15}},{"hotel":"NACIONAL INN CURITIBA SANTA FELICIDADE","cidade":"CURITIBA","sala":"VENEZA","m2":38.0,"pe":3.0,"email":"reservas@nacionalinnsantafelicidade.com.br","tel":"(41) 3075-5000","whatsapp":null,"formatos":{"AUDITÓRIO":30,"COQUETEL":30,"ESCOLAR":12,"ESPINHA DE PEIXE":12,"U":15}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ADOLPHO BLOCH","m2":36.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":35,"ESCOLAR":18,"ESPINHA DE PEIXE":18,"U":21}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ADONIRAN BARBOSA","m2":158.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":150,"ESCOLAR":98,"ESPINHA DE PEIXE":84,"U":56}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ARY CARVALHO","m2":99.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":80,"ESCOLAR":42,"ESPINHA DE PEIXE":36,"U":36}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ASSIS + SAMUEL","m2":67.5,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":70,"ESCOLAR":42,"ESPINHA DE PEIXE":36,"U":40}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ASSIS + SAMUEL + CLAUDIO","m2":92.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":100,"ESCOLAR":60,"ESPINHA DE PEIXE":48,"U":55}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ASSIS + SAMUEL + CLUADIP + BARBOSA","m2":137.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":135,"ESCOLAR":78,"ESPINHA DE PEIXE":72,"U":65}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ASSIS CHATEAUBRIAND","m2":42.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":46,"ESCOLAR":26,"ESPINHA DE PEIXE":22,"U":30}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ATAULFO + TOM (HORIZONTAL)","m2":330.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":400,"ESCOLAR":252}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ATAULFO + TOM (VERTICAL)","m2":330.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":350,"ESCOLAR":268,"ESPINHA DE PEIXE":240,"U":150}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ATAULFO ALVES","m2":127.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":120,"ESCOLAR":72,"ESPINHA DE PEIXE":60,"U":42}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"BARBOSA LIMA SOBRINHO","m2":42.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":35,"ESCOLAR":18,"ESPINHA DE PEIXE":18,"U":21}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"CARTOLA","m2":114.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":120,"ESCOLAR":70,"ESPINHA DE PEIXE":60,"U":42}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"CARTOLA + ADONIRAN (HORIZONTAL)","m2":272.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":250,"ESCOLAR":180}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"CARTOLA + ADONIRAN (VERTICAL)","m2":272.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":320,"ESCOLAR":200,"ESPINHA DE PEIXE":114,"U":92}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"CLAUDIO + BARBOSA","m2":75.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"U":28}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"CLAUDIO + BARBOSA","m2":75.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":60,"ESCOLAR":30,"ESPINHA DE PEIXE":30,"U":30}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"CLAUDIO ABRAMO","m2":28.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":24,"ESCOLAR":12,"ESPINHA DE PEIXE":12,"U":16}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"DOMINGO + ADOLPHO","m2":72.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":80,"ESCOLAR":45,"ESPINHA DE PEIXE":30,"U":36}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"DOMINGO ALZUGARAY","m2":36.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":35,"ESCOLAR":18,"ESPINHA DE PEIXE":18,"U":21}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"EUCLIDES DA CUNHA","m2":47.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":35,"ESCOLAR":24,"ESPINHA DE PEIXE":18,"U":26}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"JULIO + MENOTTI","m2":202.0,"pe":2.5,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":210,"ESPINHA DE PEIXE":144,"U":72}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"JULIO MESQUITA","m2":100.0,"pe":2.5,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":80,"ESCOLAR":70,"ESPINHA DE PEIXE":48,"U":32}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"MENOTTI DEL PICCHIA","m2":102.0,"pe":2.5,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":100,"ESCOLAR":84,"ESPINHA DE PEIXE":60,"U":38}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"OCTAVIO + ROBERTO","m2":84.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":70,"ESCOLAR":45,"ESPINHA DE PEIXE":42,"U":40}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"OCTAVIO FRIAS DE OLIVEIRA","m2":42.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":35,"ESCOLAR":18,"ESPINHA DE PEIXE":18,"U":22}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"OLAVO + ARY + EUCLIDES","m2":152.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":150,"ESCOLAR":90,"ESPINHA DE PEIXE":72,"U":54}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"OLAVO BILAC","m2":37.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":28,"ESCOLAR":18,"ESPINHA DE PEIXE":18,"U":20}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"OSCAR + RAMOS","m2":157.0,"pe":2.6,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":120,"ESCOLAR":96,"ESPINHA DE PEIXE":96,"U":45}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"OSCAR + RAMOS + PIETRO","m2":291.0,"pe":2.6,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":350,"ESCOLAR":200,"ESPINHA DE PEIXE":164,"U":90}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"OSCAR + RAMOS + PIETRO HORIZONTAL","m2":291.0,"pe":2.6,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":300,"ESCOLAR":168}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"OSCAR NIEMEYER","m2":75.0,"pe":2.6,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":48,"ESCOLAR":40,"ESPINHA DE PEIXE":40,"U":30}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"PIETRO MARIA BARDI","m2":82.0,"pe":2.6,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":60,"ESCOLAR":45,"ESPINHA DE PEIXE":45,"U":35}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"RAMOS + PIETRO","m2":177.0,"pe":2.6,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":186,"ESCOLAR":105,"ESPINHA DE PEIXE":90,"U":50}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"RAMOS DE AZEVEDO","m2":95.0,"pe":2.6,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":84,"ESCOLAR":60,"ESPINHA DE PEIXE":60,"U":35}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"ROBERTO MARINHO","m2":42.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":35,"ESCOLAR":18,"ESPINHA DE PEIXE":18,"U":22}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"SAMUEL + CLAUDIO","m2":55.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":49,"ESCOLAR":30,"ESPINHA DE PEIXE":30,"U":26}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"SAMUEL WAINER","m2":28.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":21,"ESCOLAR":12,"ESPINHA DE PEIXE":12,"U":18}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"SAMUEL+ CLAUDIO + BARBOSA","m2":90.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":90,"ESCOLAR":48,"ESPINHA DE PEIXE":42,"U":50}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"TOM JOBIM","m2":177.0,"pe":2.4,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":180,"ESCOLAR":105,"ESPINHA DE PEIXE":90,"U":58}},{"hotel":"NACIONAL INN JARAGUÁ","cidade":"SÃO PAULO","sala":"VICTOR CIVITA","m2":42.0,"pe":2.8,"email":"eventos@nacionalinnjaragua.com","tel":"(11) 94067-6995","whatsapp":null,"formatos":{"AUDITÓRIO":40,"ESCOLAR":27,"ESPINHA DE PEIXE":24,"U":25}},{"hotel":"NACIONAL INN RIBEIRÃO PRETO","cidade":"RIBEIRÃO PRETO","sala":"SALA X","m2":15.0,"pe":2.27,"email":"reservas@nacionalinnrp.com.br","tel":"(16) 2108-0790","whatsapp":null,"formatos":{"AUDITÓRIO":13,"ESCOLAR":8,"MEIA LUA":4,"MESAS REDONDAS":6}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"ANFITEATRO","m2":334.0,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"AUDITÓRIO":336}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 2","m2":12.0,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"MESA REDONDA FIXA":8}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 3 - PROFº JACEK","m2":20.2,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"MESA REDONDA FIXA":8}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 4 - RICARDO","m2":14.7,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"MESA REDONDA FIXA":8}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 5 + 6 -  YOUNG + SMITH","m2":238.0,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"AUDITÓRIO":220,"ESCOLAR":120,"ESPINHA DE PEIXE":60,"MESAS REDONDAS":200,"U":40}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 5 - PROFº YOUNG","m2":89.7,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"AUDITÓRIO":60,"ESCOLAR":40,"ESPINHA DE PEIXE":35,"MESAS REDONDAS":50,"U":20}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 6 - PROFº SMITH","m2":121.0,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"AUDITÓRIO":110,"ESCOLAR":40,"ESPINHA DE PEIXE":40,"MESAS REDONDAS":60,"U":28}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 7 - BRIGADEIRO VEIGA","m2":44.0,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"AUDITÓRIO":30,"ESCOLAR":12,"ESPINHA DE PEIXE":12,"MESAS REDONDAS":30,"U":12}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 8 - BRIGADEIRO LEAL","m2":51.7,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"AUDITÓRIO":30,"ESCOLAR":12,"ESPINHA DE PEIXE":12,"MESAS REDONDAS":30,"U":12}},{"hotel":"NACIONAL INN SÃO JOSÉ DOS CAMPOS","cidade":"SÃO JOSÉ DOS CAMPOS","sala":"SALA 9 - BRIGADEIRO MORAES","m2":158.7,"pe":2.5,"email":"eventos@nacionalinnsjc.com.br","tel":"(12) 3947- 0056","whatsapp":null,"formatos":{"AUDITÓRIO":150,"ESCOLAR":70,"ESPINHA DE PEIXE":60,"MESAS REDONDAS":120,"U":40}},{"hotel":"NACIONAL INN TORRES CURITIBA","cidade":"CURITIBA","sala":"PARANÁ","m2":144.0,"pe":2.8,"email":"reservas@nacionalinntorres.com.br","tel":"(41) 3014-4341","whatsapp":null,"formatos":{"AUDITÓRIO":130,"BANQUETE":100,"COQUETEL":100,"ESCOLAR":50,"ESPINHA DE PEIXE":50,"MEIA LUA":100,"U":30}},{"hotel":"NACIONAL INN TORRES CURITIBA","cidade":"CURITIBA","sala":"SOLARIUM","m2":127.0,"pe":2.8,"email":"reservas@nacionalinntorres.com.br","tel":"(41) 3014-4341","whatsapp":null,"formatos":{"AUDITÓRIO":100,"BANQUETE":70,"COQUETEL":70,"ESCOLAR":40,"ESPINHA DE PEIXE":30,"MEIA LUA":70,"U":25}},{"hotel":"VICTORIA VILLA CURITIBA","cidade":"CURITIBA","sala":"FIRENZE","m2":74.0,"pe":2.5,"email":"reservas@victoriavilla.com.br","tel":"(41) 3072-7878","whatsapp":null,"formatos":{"AUDITÓRIO":65,"BANQUETE":15,"COQUETEL":65,"ESCOLAR":20,"ESPINHA DE PEIXE":20,"U":15}},{"hotel":"VICTORIA VILLA CURITIBA","cidade":"CURITIBA","sala":"MILANO","m2":198.0,"pe":3.0,"email":"reservas@victoriavilla.com.br","tel":"(41) 3072-7878","whatsapp":null,"formatos":{"AUDITÓRIO":285,"BANQUETE":80,"COQUETEL":150,"ESCOLAR":85,"ESPINHA DE PEIXE":85,"U":60}}];
+
+let ROOMS = [];
+let selected = [];
+
+async function loadData() {
+  document.getElementById('loading-state').style.display='block';
+  document.getElementById('init-state').style.display='none';
+  try {
+    const res = await fetch(API_URL);
+    const raw = await res.json();
+    ROOMS = parseSheets(raw);
+    document.getElementById('total-hint').textContent = ROOMS.length + ' salas carregadas da planilha.';
+  } catch(e) {
+    ROOMS = FALLBACK;
+    document.getElementById('total-hint').textContent = ROOMS.length + ' salas disponíveis (modo offline).';
+  }
+  document.getElementById('loading-state').style.display='none';
+  document.getElementById('init-state').style.display='block';
+  updateHoteis();
+}
+
+function parseSheets(raw) {
+  const FMTS = ['AUDITÓRIO','BANQUETE','COQUETEL','ESCOLAR','ESPINHA DE PEIXE','FESTA','MEIA LUA','MESA REDONDA FIXA','MESAS REDONDAS','PLENÁRIA','REUNIÃO','U'];
+  return raw.map(r => {
+    const formatos = {};
+    FMTS.forEach(f => { const v = r[f]; if(v && !isNaN(parseInt(v))) formatos[f] = parseInt(v); });
+    return {
+      hotel: (r['HOTEL']||'').trim(),
+      cidade: (r['CIDADE']||'').trim(),
+      sala: (r['SALA']||'').trim(),
+      m2: parseFloat(r['M²']||r['M2']||0)||null,
+      pe: parseFloat(r['PÉ DIREITO']||r['PE DIREITO']||0)||null,
+      email: r['EMAIL']||null,
+      tel: r['TELEFONE']||null,
+      whatsapp: r['WHATSAPP']||null,
+      formatos
+    };
+  }).filter(r => r.hotel && r.sala && Object.keys(r.formatos).length > 0);
+}
+
+function updateHoteis() {
+  const cidade = document.getElementById('sel-cidade').value;
+  const hoteis = [...new Set(ROOMS.filter(r => !cidade || r.cidade===cidade).map(r=>r.hotel))].sort();
+  const sel = document.getElementById('sel-hotel');
+  sel.innerHTML = '<option value="">Todos os hotéis</option>' + hoteis.map(h=>`<option>${h}</option>`).join('');
+}
+
+function getStatus(cap, pax) {
+  if (!pax) return 'neutral';
+  if (cap >= pax) return 'fits';
+  if (cap >= pax * 0.9) return 'tight';
+  return 'nope';
+}
+
+function bestStatus(formatos, pax, filterFmt) {
+  if (!pax) return 'neutral';
+  const fmts = filterFmt ? {[filterFmt]: formatos[filterFmt]} : formatos;
+  const statuses = Object.values(fmts).map(cap => getStatus(cap, pax));
+  if (statuses.includes('fits')) return 'fits';
+  if (statuses.includes('tight')) return 'tight';
+  return 'nope';
+}
+
+function buscar() {
+  const cidade  = document.getElementById('sel-cidade').value;
+  const hotel   = document.getElementById('sel-hotel').value;
+  const formato = document.getElementById('sel-formato').value;
+  const pax     = parseInt(document.getElementById('inp-pax').value)||0;
+  const peMin   = parseFloat(document.getElementById('inp-pe').value)||0;
+
+  let data = [...ROOMS];
+  if (cidade)  data = data.filter(r => r.cidade===cidade);
+  if (hotel)   data = data.filter(r => r.hotel===hotel);
+  if (peMin>0) data = data.filter(r => r.pe && r.pe>=peMin);
+  if (formato) data = data.filter(r => r.formatos[formato]);
+
+  // Sort: fits first, then tight, then nope
+  data.sort((a,b) => {
+    const order = {fits:0, tight:1, nope:2, neutral:3};
+    const sa = bestStatus(a.formatos, pax, formato);
+    const sb = bestStatus(b.formatos, pax, formato);
+    if (order[sa] !== order[sb]) return order[sa]-order[sb];
+    const ca = formato ? (a.formatos[formato]||0) : Math.max(...Object.values(a.formatos));
+    const cb = formato ? (b.formatos[formato]||0) : Math.max(...Object.values(b.formatos));
+    return cb - ca;
+  });
+
+  const fits = pax ? data.filter(r => bestStatus(r.formatos,pax,formato)==='fits').length : null;
+  const nope = pax ? data.filter(r => bestStatus(r.formatos,pax,formato)==='nope').length : null;
+  document.getElementById('st-total').textContent = data.length;
+  document.getElementById('st-ok').textContent = fits!==null ? fits : '—';
+  document.getElementById('st-no').textContent = nope!==null ? nope : '—';
+
+  const selIds = new Set(selected.map(s=>s.id));
+  let html = '';
+  data.forEach(r => {
+    const id = r.hotel+'||'+r.sala;
+    const bs = bestStatus(r.formatos, pax, formato);
+    const dc = {fits:'#1a7a3c', tight:'#c87a1a', nope:'#ddd', neutral:'#ddd'}[bs];
+    const st = {fits:'Comporta o grupo', tight:'Capacidade próxima do limite', nope:'Capacidade insuficiente', neutral:'Disponível'}[bs];
+    const meta = [r.pe ? `Pé direito: ${r.pe}m` : null, r.m2 ? `${r.m2} m²` : null].filter(Boolean).join(' · ');
+    const isSel = selIds.has(id);
+
+    // Build format tags — show filtered format first, then others
+    const fmtEntries = formato
+      ? [[formato, r.formatos[formato]], ...Object.entries(r.formatos).filter(([f])=>f!==formato)]
+      : Object.entries(r.formatos).sort((a,b)=>b[1]-a[1]);
+
+    const tags = fmtEntries.map(([f, cap]) => {
+      const s = getStatus(cap, pax);
+      return `<div class="fmt-tag ${s}">
+        <span class="fmt-tag-cap">${cap}</span>
+        <span class="fmt-tag-name">${f}</span>
+      </div>`;
+    }).join('');
+
+    const eid = id.replace(/[^a-z0-9]/gi,'_');
+    const safeHotel = r.hotel.replace(/'/g,"\'");
+    const safeSala = r.sala.replace(/'/g,"\'");
+    const safeEmail = (r.email||'').replace(/'/g,"\'");
+    const safeTel = (r.tel||'').replace(/'/g,"\'");
+    const safeWa = (r.whatsapp||'').replace(/'/g,"\'");
+    const safeId = id.replace(/'/g,"\'");
+
+    html += `<div class="card ${bs}${isSel?' selected':''}" id="card-${eid}" onclick="toggleCard('${safeId}','${safeHotel}','${safeSala}','${safeEmail}','${safeTel}','${safeWa}',${JSON.stringify(r.formatos)})">
+      <div class="card-check"><svg class="check-icon" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg></div>
+      <div class="card-hotel">${r.hotel}</div>
+      <div class="card-sala">${r.sala}</div>
+      <div class="card-meta">${meta||'Sem dados técnicos'}</div>
+      <div class="fmts-grid">${tags}</div>
+      <div class="card-footer"><div class="status-dot" style="background:${dc}"></div><div class="status-text">${st}</div></div>
+    </div>`;
+  });
+
+  document.getElementById('cards-container').innerHTML = html || '<div class="empty">Nenhuma sala encontrada para os filtros selecionados.</div>';
+
+  const contactMap = {};
+  data.forEach(r => { if(r.email && !contactMap[r.hotel]) contactMap[r.hotel]={email:r.email,tel:r.tel}; });
+  const rows = [...new Set(data.map(r=>r.hotel))].filter(h=>contactMap[h])
+    .map(h=>`<tr><td>${h}</td><td><a href="mailto:${contactMap[h].email}">${contactMap[h].email}</a></td><td>${contactMap[h].tel||'—'}</td></tr>`).join('');
+  document.getElementById('contact-body').innerHTML = rows||'<tr><td colspan="3" style="text-align:center;color:#ccc;padding:1rem">Sem contatos</td></tr>';
+
+  document.getElementById('results-area').style.display='block';
+  document.getElementById('init-state').style.display='none';
+}
+
+function toggleCard(id, hotel, sala, email, tel, whatsapp, formatos) {
+  const idx = selected.findIndex(s=>s.id===id);
+  if (idx>=0) selected.splice(idx,1);
+  else selected.push({id, hotel, sala, email, tel, whatsapp, formatos});
+  const el = document.getElementById('card-'+id.replace(/[^a-z0-9]/gi,'_'));
+  if(el) el.classList.toggle('selected', selected.some(s=>s.id===id));
+  updateFloatBar();
+}
+
+function updateFloatBar() {
+  document.getElementById('sel-count').textContent = selected.length;
+  document.getElementById('float-bar').classList.toggle('visible', selected.length>0);
+}
+
+function clearSelection() {
+  selected=[];
+  document.querySelectorAll('.card.selected').forEach(c=>c.classList.remove('selected'));
+  updateFloatBar();
+}
+
+function openOrcamento() {
+  document.getElementById('orc-list').innerHTML = selected.map(s=>{
+    const fmtStr = Object.entries(s.formatos).map(([f,c])=>`${f}: ${c} pax`).join(' | ');
+    return `<div class="orc-item"><span class="orc-hotel">${s.hotel}</span> — ${s.sala}<br><small style="color:#999">${fmtStr}</small></div>`;
+  }).join('');
+
+  const salas = selected.map(s=>s.sala).join(', ');
+  const hoteis = [...new Set(selected.map(s=>s.hotel))].join(', ');
+  const fmtDesc = selected.map(s=>{
+    const fs = Object.entries(s.formatos).map(([f,c])=>`${f}: ${c} pax`).join(', ');
+    return `${s.sala} (${fs})`;
+  }).join('\n');
+  const msg = encodeURIComponent(`Olá! Gostaria de solicitar orçamento:\n\nHotel(s): ${hoteis}\nSala(s):\n${fmtDesc}\n\nAguardo retorno.`);
+
+  const emails = [...new Set(selected.filter(s=>s.email).map(s=>s.email))];
+  const tels   = [...new Set(selected.filter(s=>s.tel).map(s=>s.tel))];
+  const wasaps = [...new Set(selected.filter(s=>s.whatsapp).map(s=>s.whatsapp))];
+  const wanum  = (wasaps[0]||tels[0]||'').replace(/\D/g,'');
+
+  let opts = '';
+  if (wanum) opts += `<a class="contact-opt" href="https://wa.me/55${wanum}?text=${msg}" target="_blank">
+    <div class="contact-opt-icon" style="background:#e7f9ee"><svg width="20" height="20" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg></div>
+    <div><div class="contact-opt-text">WhatsApp</div><div class="contact-opt-sub">Mensagem pré-preenchida com as salas</div></div>
+  </a>`;
+  if (tels.length) opts += `<a class="contact-opt" href="tel:${tels[0]}">
+    <div class="contact-opt-icon" style="background:#e8f0fe"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 10.8a19.79 19.79 0 01-3.07-8.68A2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div>
+    <div><div class="contact-opt-text">Ligação</div><div class="contact-opt-sub">${tels[0]}</div></div>
+  </a>`;
+  if (emails.length) {
+    const subj = encodeURIComponent('Solicitação de orçamento — '+hoteis);
+    const body = encodeURIComponent(`Olá!\n\nGostaria de solicitar orçamento:\n\nHotel(s): ${hoteis}\nSala(s):\n${fmtDesc}\n\nAguardo retorno.`);
+    opts += `<a class="contact-opt" href="mailto:${emails.join(',')}?subject=${subj}&body=${body}">
+      <div class="contact-opt-icon" style="background:#fef3e2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+      <div><div class="contact-opt-text">E-mail</div><div class="contact-opt-sub">${emails.join(', ')}</div></div>
+    </a>`;
+  }
+  document.getElementById('contact-opts').innerHTML = opts;
+  document.getElementById('orc-overlay').classList.add('open');
+}
+function closeOrcamento() { document.getElementById('orc-overlay').classList.remove('open'); }
+
+function openAdmin() {
+  document.getElementById('admin-overlay').classList.add('open');
+  document.getElementById('admin-pass').value='';
+  document.getElementById('admin-err').style.display='none';
+  setTimeout(()=>document.getElementById('admin-pass').focus(),100);
+}
+function closeAdmin() { document.getElementById('admin-overlay').classList.remove('open'); }
+function checkAdmin() {
+  if(document.getElementById('admin-pass').value===ADMIN_PASSWORD) {
+    closeAdmin();
+    window.open(SHEETS_URL,'_blank');
+  } else {
+    document.getElementById('admin-err').style.display='block';
+    document.getElementById('admin-pass').value='';
+    document.getElementById('admin-pass').focus();
+  }
+}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('open')}));
+loadData();
+</script>
+</body>
+</html>
