@@ -670,19 +670,90 @@ function renderContactButtons() {
   document.getElementById('contact-opts').innerHTML = opts || '<p style="font-size:13px;color:#999">Nenhum contato disponível para as salas selecionadas.</p>';
 }
 
+function lerFormulario() {
+  return {
+    nome:    (document.getElementById('b-nome')||{}).value||'',
+    empresa: (document.getElementById('b-empresa')||{}).value||'',
+    ftel:    (document.getElementById('b-tel')||{}).value||'',
+    femail:  (document.getElementById('b-email')||{}).value||'',
+    pax:     (document.getElementById('b-pax')||{}).value||'',
+    periodo: (document.getElementById('b-periodo')||{}).value||'',
+    nsalas:  (document.getElementById('b-salas')||{}).value||'',
+    ab:      (document.getElementById('b-ab')||{}).value||'',
+    obs:     (document.getElementById('b-obs')||{}).value||''
+  };
+}
+
+function montarMensagem(f) {
+  const paxBusca = parseInt((document.getElementById('inp-pax')||{}).value)||0;
+  const fmtBusca = (document.getElementById('sel-formato')||{}).value||'';
+  const hoteis = [...new Set(selected.map(s=>s.hotel))].join(', ');
+
+  const salaDesc = selected.map(s => {
+    let cap = '';
+    if (fmtBusca && s.formatos[fmtBusca]) {
+      cap = fmtBusca + ': ' + s.formatos[fmtBusca] + ' pax';
+    } else if (paxBusca) {
+      const ok = Object.entries(s.formatos).filter(([,v])=>v>=paxBusca);
+      const lista = ok.length ? ok : Object.entries(s.formatos);
+      cap = lista.map(([k,v])=>k+': '+v+' pax').join(', ');
+    } else {
+      cap = Object.entries(s.formatos).map(([k,v])=>k+': '+v+' pax').join(', ');
+    }
+    const meta = (s.m2?'M²: '+s.m2+' | ':'') + (s.pe?'Pé direito: '+s.pe+'m':'');
+    return '• ' + s.hotel + ' — ' + s.sala + '\n  Capacidade: ' + cap + (meta?'\n  '+meta:'');
+  }).join('\n');
+
+  const waMsg = [
+    '*SOLICITAÇÃO DE ORÇAMENTO — NACIONAL INN*','',
+    '*DADOS DO SOLICITANTE*',
+    '*Responsável:* ' + (f.nome||'—'),
+    f.empresa ? '*Empresa/Agência:* ' + f.empresa : null,
+    '*Telefone:* ' + (f.ftel||'—'),
+    '*E-mail:* ' + (f.femail||'—'),'',
+    '*DETALHES DO EVENTO*',
+    '*Período:* ' + (f.periodo||'—'),
+    '*Nº de pessoas:* ' + (f.pax||'—'),
+    '*Qtd de salas:* ' + (f.nsalas||'—'),
+    f.ab ? '*Alimentos e Bebidas:* ' + f.ab : null,
+    f.obs ? '*Observações:* ' + f.obs : null,'',
+    '*SALAS SELECIONADAS*',
+    salaDesc
+  ].filter(l=>l!==null).join('\n');
+
+  const emailMsg = [
+    'Olá,','','Segue solicitação de orçamento:','',
+    'DADOS DO SOLICITANTE',
+    'Responsável: ' + (f.nome||'—'),
+    f.empresa ? 'Empresa/Agência: ' + f.empresa : '',
+    'Telefone: ' + (f.ftel||'—'),
+    'E-mail: ' + (f.femail||'—'),'',
+    'DETALHES DO EVENTO',
+    'Período: ' + (f.periodo||'—'),
+    'Nº de pessoas: ' + (f.pax||'—'),
+    'Qtd de salas: ' + (f.nsalas||'—'),
+    f.ab ? 'Alimentos e Bebidas: ' + f.ab : '',
+    f.obs ? 'Observações: ' + f.obs : '','',
+    'SALAS SELECIONADAS',
+    salaDesc,'','Aguardo retorno.'
+  ].filter(l=>l!=='').join('\n');
+
+  return {waMsg, emailMsg, hoteis};
+}
+
 function enviarWhatsApp(wanum) {
   if (!validarBriefing()) return;
-  const {waLines} = getBriefingTexts();
-  const url = `https://wa.me/55${wanum}?text=${encodeURIComponent(waLines)}`;
-  window.open(url, '_blank');
+  const f = lerFormulario();
+  const {waMsg} = montarMensagem(f);
+  window.open('https://wa.me/55' + wanum + '?text=' + encodeURIComponent(waMsg), '_blank');
 }
 
 function enviarEmail(emails) {
   if (!validarBriefing()) return;
-  const {emailLines, hoteis} = getBriefingTexts();
-  const subj = encodeURIComponent('Solicitação de Orçamento — '+hoteis);
-  const body = encodeURIComponent(emailLines);
-  window.open(`mailto:${emails}?subject=${subj}&body=${body}`);
+  const f = lerFormulario();
+  const {emailMsg, hoteis} = montarMensagem(f);
+  const subj = encodeURIComponent('Solicitação de Orçamento — ' + hoteis);
+  window.open('mailto:' + emails + '?subject=' + subj + '&body=' + encodeURIComponent(emailMsg));
 }
 
 function validarBriefing() {
